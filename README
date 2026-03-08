@@ -1,0 +1,40 @@
+xpl
+---
+A udp server that listens for edit commands
+over an arbitrary port. The received command
+is of format `filename:range` and is sent to
+the plumber so that it can be opened by sam/acme.
+xpl is to be run on plan9/9front. Of course,
+said file is expected to be found under /mnt/term.
+
+Usage
+---
+% xpl &
+
+You can send a request to said port (default: 11222)
+using netcat like this:
+
+$ echo file:1,5 | ncat -u $ip 11222
+
+'e' is a simple utility which does this
+for you.
+
+Rationale
+---
+This tool exists because some of us like to
+use the programming environment (sam and rio)
+of plan9, although, we can't switch from Linux/BSD
+due to other reasons. This tool will help in
+such a usecase where you want to navigate a
+file tree using your local shell and invoke
+'e' on a file to edit using your favorite
+plan9 editor.
+
+CAVEATS
+---
+You can only send `edit` commands i.e. you
+can't open a pdf with page or so on plan9.
+In short, this is not a generic external plumber.
+
+-
+ naveen

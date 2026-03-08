@@ -3,18 +3,20 @@
 #include <stdio.h>
 #include <plumb.h>
 
+static int port = 11222;
+
 int
 main(int argc, char *argv[])
 {
     Plumbmsg plumb;
     Plumbattr attr;
     int pfd, afd, lfd, dfd, n;
-    char adir[40], ldir[40];
+    char addr[16], adir[40], ldir[40];
     char buf[128];
     char range[16];
     char *s;
 
-    plumb.src = "echo";
+    plumb.src = "xpl";
     plumb.dst = "edit";
     plumb.wdir = "/mnt/term";
     plumb.type = "text";
@@ -22,37 +24,36 @@ main(int argc, char *argv[])
     attr.name = "addr";
     attr.value = "0";
     attr.next = NULL;
-    
+
     pfd = plumbopen("send", OWRITE);
     if(pfd < 0){
         perror("plumbopen");
         return -1;
     }
-    afd = announce("udp!*!11222", adir);
-    if(afd < 0)
+    snprint(addr, 16, "udp!*!%d", port);
+    afd = announce(addr, adir);
+    if(afd < 0){
+        perror("announce");
         return -1;
+    }
     for(;;){
-//        printf("listen\n");
         lfd = listen(adir, ldir);
         if(lfd < 0)
             return -1;
-//        printf("fork\n");
         switch(fork()){
         case -1:
-            perror("forking");
+            perror("fork");
             close(lfd);
             break;
         case 0:
-//            printf("accept\n");
             dfd = accept(lfd, ldir);
-            if(dfd < 0)
+            if(dfd < 0){
+                perror("accept");
                 return -1;
-//            printf("read\n");
-            
+            }
             memset(buf, 0, sizeof(buf));
             memset(range, 0, sizeof(range));
             if((n = read(dfd, buf, sizeof(buf))) > 0){
-                //printf("read %ld bytes\n", n);
                 buf[n] = 0;
                 if((s = strchr(buf, '\n')) != nil)
                     *s = 0;
@@ -63,7 +64,6 @@ main(int argc, char *argv[])
                 s = buf;
                 if(buf[0] == '/')
                     s++;
-                
                 print("n: %ld: %s\n", n, s);
                 plumb.ndata = strlen(s);
                 plumb.data = s;
